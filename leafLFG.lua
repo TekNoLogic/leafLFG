@@ -110,15 +110,13 @@ end
 addon:RegisterEvent'VARIABLES_LOADED'
 addon:SetScript('OnEvent', function()
 	debug'OnLoad'
-	local default_comment = L['LFG-Channel enabled by leafLFG']
 
 	local leader, tank, healer, damage = GetLFGRoles()
 	if not (leader or tank or healer or damage) then
 		SetLFGRoles(false, false, false, true)
 	end
 
-	leafLFGDB = leafLFGDB or {}
-	leafLFGDB.comment = leafLFGDB.comment or default_comment
+	leafLFGDB = setmetatable(leafLFGDB or {}, {__index = {comment = L['LFG-Channel enabled by leafLFG']}})
 
 	addon:OnEvent()
 	addon:SetScript('OnEvent', addon.OnEvent)
@@ -201,11 +199,10 @@ addon:SetScript('OnEvent', function()
 	end)
 
 	frame.default = function()
-		leafLFGDB = {}
-		leafLFGDB.comment = default_comment
+		for i in pairs(leafLFGDB) do leafLFGDB[i] = nil end
 		commentinput:ClearFocus()
-		commentinput:SetText(default_comment)
-		SetLFGComment(default_comment)
+		commentinput:SetText(leafLFGDB.comment)
+		SetLFGComment(leafLFGDB.comment)
 		for dummy, cb in pairs(addon.checkboxes) do
 			cb:SetChecked(false)
 		end
