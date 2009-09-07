@@ -3,16 +3,16 @@ local L = setmetatable(locale == 'zhCN' and {
 	['LFG-Channel enabled by leafLFG'] = '组队频道由leafLFG自动启用',
 	['When join automatically?'] = '何时自动加入',
 	['LFG Comment:'] = '注释:',
-	['solo'] = '未组队',
-	['party'] = '小队',
-	['raid'] = '团队',
+	['Solo'] = '未组队',
+	['Party'] = '小队',
+	['Raid'] = '团队',
 } or locale == 'zhTW' and {
 	['LFG-Channel enabled by leafLFG'] = '組隊頻道由leafLFG自動啟用',
 	['When join automatically?'] = '何時自動加入',
 	['LFG Comment:'] = '注釋:',
-	['solo'] = '未組隊',
-	['party'] = '小隊',
-	['raid'] = '團隊',
+	['Solo'] = '未組隊',
+	['Party'] = '小隊',
+	['Raid'] = '團隊',
 } or {}, {__index=function(t,i) return i end})
 
 
@@ -39,11 +39,11 @@ function addon:GetGroupStatus()
 	local raidnum = GetRealNumRaidMembers()
 	local partynum = GetRealNumPartyMembers()
 	if raidnum > 0 then
-		return 'raid', (raidnum ~= 40) and IsRaidLeader()
+		return 'Raid', (raidnum ~= 40) and IsRaidLeader()
 	elseif partynum > 0 then
-		return 'party', (partynum ~= 5) and IsPartyLeader'player'
+		return 'Party', (partynum ~= 5) and IsPartyLeader'player'
 	else
-		return 'solo', true
+		return 'Solo', true
 	end
 end
 
@@ -58,7 +58,7 @@ function addon:Join()
 	if not can then return end
 
 	addon:Leave()
-	if typ == 'solo' then
+	if typ == 'Solo' then
 		SetLookingForGroup(3,5,1)
 	else
 		SetLookingForMore(5,1)
@@ -139,24 +139,21 @@ frame:SetScript("OnShow", function()
 	title:SetText('leafLFG')
 
 	local about = frame:CreateFontString(nil, 'ARTWORK', 'GameFontHighlightSmall')
-	about:SetPoint('TOPLEFT', title, 'BOTTOMLEFT', 0, -5)
-	about:SetPoint('RIGHT', frame, -20, 0)
-	about:SetHeight(40)
+	about:SetPoint('TOPLEFT', title, 'BOTTOMLEFT', 0, -8)
+	about:SetPoint('RIGHT', frame, -32, 0)
+	about:SetHeight(32)
 	about:SetJustifyH('LEFT')
 	about:SetJustifyV('TOP')
-	about:SetText(L['A simple addon helps you join LFG Channel easily'])
-
-	local checkboxabout = frame:CreateFontString(nil, 'ARTWORK', 'GameFontHighlightSmall')
-	checkboxabout:SetPoint('TOPLEFT', about, 'BOTTOMLEFT', 0, -30)
-	checkboxabout:SetText(L['When join automatically?'])
+	about:SetText(GetAddOnMetadata(frame.name, "Notes"))
 
 	local last
-	addon.checkboxes = {}
-	for dummy, typ in pairs{'solo', 'party', 'raid'} do
+	local checkboxes = {}
+	for dummy, typ in pairs{'Solo', 'Party', 'Raid'} do
 		local check = CreateFrame('CheckButton', nil, frame, 'OptionsCheckButtonTemplate')
-		check:SetPoint('TOPLEFT', last or checkboxabout, 'BOTTOMLEFT', last and 0 or 20, last and 0 or -10)
+		check:SetPoint('TOPLEFT', last or about, 'BOTTOMLEFT', last and 0 or -2, last and 0 or -8)
+		check.tooltipText = L["Automatically join the LFG system when "..(typ == "Solo" and "" or L["in "])..L[typ:lower()]]
 
-		local label = check:CreateFontString(nil, 'BACKGROUND', 'GameFontNormal')
+		local label = check:CreateFontString(nil, 'BACKGROUND', 'GameFontHighlight')
 		label:SetPoint('LEFT', check, 'RIGHT', 3, 2)
 		label:SetText(L[typ])
 		check.label = label
@@ -184,18 +181,19 @@ frame:SetScript("OnShow", function()
 		end)
 
 		last = check
-		addon.checkboxes[typ] = check
+		checkboxes[typ] = check
 	end
 
-	local commentinputabout = frame:CreateFontString(nil, 'ARTWORK', 'GameFontHighlightSmall')
-	commentinputabout:SetPoint('TOPLEFT', last, 'BOTTOMLEFT', -20, -25)
+	local commentinputabout = frame:CreateFontString(nil, 'ARTWORK', 'GameFontNormalSmall')
+	commentinputabout:SetPoint('TOP', last, 'BOTTOM', 0, -8)
+	commentinputabout:SetPoint('LEFT', 16, 0)
 	commentinputabout:SetText(L['LFG Comment:'])
 
 	local commentinput = CreateFrame('EditBox', nil, frame, 'InputBoxTemplate')
 	commentinput:SetHeight(25)
 	commentinput:SetWidth(300)
 	commentinput:SetAutoFocus(false)
-	commentinput:SetPoint('TOPLEFT', commentinputabout, 'BOTTOMLEFT', 5, -5)
+	commentinput:SetPoint('TOPLEFT', commentinputabout, 'BOTTOMLEFT', 8, -2)
 	commentinput:SetText(leafLFGDB.comment)
 	commentinput:SetScript('OnEscapePressed', commentinput.ClearFocus)
 	commentinput:SetScript('OnEnterPressed', commentinput.ClearFocus)
@@ -206,12 +204,10 @@ frame:SetScript("OnShow", function()
 
 	frame.default = function()
 		for i in pairs(leafLFGDB) do leafLFGDB[i] = nil end
+		for typ,cb in pairs(checkboxes) do cb:SetChecked(false) end
 		commentinput:ClearFocus()
 		commentinput:SetText(leafLFGDB.comment)
 		SetLFGComment(leafLFGDB.comment)
-		for dummy, cb in pairs(addon.checkboxes) do
-			cb:SetChecked(false)
-		end
 	end
 
 	frame:SetScript("OnShow", nil)
