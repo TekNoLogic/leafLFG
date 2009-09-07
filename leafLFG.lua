@@ -121,7 +121,7 @@ addon:SetScript('OnEvent', function()
 		SetLFGRoles(false, false, false, true)
 	end
 
-	leafLFGDB = setmetatable(leafLFGDB or {}, {__index = {comment = L['LFG-Channel enabled by leafLFG']}})
+	leafLFGDB = setmetatable(leafLFGDB or {}, {__index = {comment = L['LFG-Channel enabled by leafLFG'], Solo = true}})
 
 	addon:OnEvent()
 	addon:SetScript('OnEvent', addon.OnEvent)
@@ -204,7 +204,7 @@ frame:SetScript("OnShow", function()
 
 	frame.default = function()
 		for i in pairs(leafLFGDB) do leafLFGDB[i] = nil end
-		for typ,cb in pairs(checkboxes) do cb:SetChecked(false) end
+		for typ,cb in pairs(checkboxes) do cb:SetChecked(leafLFGDB[typ]) end
 		commentinput:ClearFocus()
 		commentinput:SetText(leafLFGDB.comment)
 		SetLFGComment(leafLFGDB.comment)
