@@ -50,14 +50,6 @@ function addon:GetLFGStatus()
 	return lfg or lfm, lfg, lfm
 end
 
-function addon:UpdateBrokerText()
-	if addon:GetLFGStatus() then
-		obj.text = L['|cff00ff00On|r']
-	else
-		obj.text = L['|cffff0000Off|r']
-	end
-end
-
 function addon:Join()
 	local typ, can = addon:GetGroupStatus()
 	debug('join GroupStatus', typ, can)
@@ -79,7 +71,7 @@ end
 
 function addon:OnEvent(event)
 	debug('\n\n\nOnEvent', event)
-	addon:UpdateBrokerText()
+	obj.text = addon:GetLFGStatus() and L['|cff00ff00On|r'] or L['|cffff0000Off|r']
 	if event == 'LFG_UPDATE' then return end
 	local typ, can = addon:GetGroupStatus()
 	debug('GroupStatus', typ, can)
