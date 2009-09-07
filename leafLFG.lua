@@ -100,7 +100,7 @@ function f:PLAYER_LOGIN()
 
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self.PLAYER_LOGIN = nil
-end)
+end
 
 
 function f:LFG_UPDATE(event)
