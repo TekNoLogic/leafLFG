@@ -167,7 +167,7 @@ addon:SetScript('OnEvent', function()
 		label:SetText(L[typ])
 		check.label = label
 
-		check:SetChecked(leafLFGDB[typ] and true or false)
+		check:SetChecked(leafLFGDB[typ])
 		check.typ = typ
 
 		check:SetScript('OnClick', function(self)
@@ -203,9 +203,7 @@ addon:SetScript('OnEvent', function()
 	commentinput:SetAutoFocus(false)
 	commentinput:SetPoint('TOPLEFT', commentinputabout, 'BOTTOMLEFT', 5, -5)
 	commentinput:SetText(leafLFGDB.comment)
-	commentinput:SetScript('OnEscapePressed', function(self)
-		self:ClearFocus()
-	end)
+	commentinput:SetScript('OnEscapePressed', commentinput.ClearFocus)
 	commentinput:SetScript('OnEnterPressed', function(self)
 		local msg = self:GetText()
 		leafLFGDB.comment = msg
