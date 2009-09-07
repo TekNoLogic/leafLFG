@@ -26,9 +26,11 @@ else
 	debug = function() end
 end
 
+local open_eye = 'Interface\\AddOns\\leafLFG\\icon.tga'
+local closed_eye = 'Interface\\AddOns\\leafLFG\\icon2.tga'
 local obj = LibStub('LibDataBroker-1.1'):NewDataObject('leafLFG', {
 	type = 'data source',
-	icon = 'Interface\\Icons\\spell_shadow_curseofmannoroth',
+	icon = closed_eye,
 	label = L["LFG"],
 	text = '...',
 })
@@ -71,7 +73,9 @@ end
 
 function addon:OnEvent(event)
 	debug('\n\n\nOnEvent', event)
-	obj.text = addon:GetLFGStatus() and L['|cff00ff00On|r'] or L['|cffff0000Off|r']
+	local looking = addon:GetLFGStatus()
+	obj.text = looking and L['|cff00ff00On|r'] or L['|cffff0000Off|r']
+	obj.icon = looking and open_eye or closed_eye
 	if event == 'LFG_UPDATE' then return end
 	local typ, can = addon:GetGroupStatus()
 	debug('GroupStatus', typ, can)
