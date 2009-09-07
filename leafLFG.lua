@@ -29,7 +29,7 @@ end
 local open_eye = 'Interface\\AddOns\\leafLFG\\icon.tga'
 local closed_eye = 'Interface\\AddOns\\leafLFG\\icon2.tga'
 local obj = LibStub('LibDataBroker-1.1'):NewDataObject('leafLFG', {
-	type = 'data source',
+	type = 'launcher',
 	icon = closed_eye,
 	label = L["LFG"],
 	text = '...',
