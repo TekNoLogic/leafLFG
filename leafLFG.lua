@@ -93,6 +93,7 @@ function addon:OnEvent(event)
 end
 
 local frame = CreateFrame('Frame', nil, InterfaceOptionsFramePanelContainer)
+frame:Hide()
 frame.name = 'leafLFG'
 addon.option = frame
 InterfaceOptions_AddCategory(frame)
@@ -130,8 +131,9 @@ addon:SetScript('OnEvent', function()
 	addon:RegisterEvent'ZONE_CHANGED_NEW_AREA'
 	addon:RegisterEvent'LFG_UPDATE'
 	SetLFGComment(leafLFGDB.comment)
+end)
 
-
+frame:SetScript("OnShow", function()
 	local title = frame:CreateFontString(nil, 'ARTWORK', 'GameFontNormalLarge')
 	title:SetPoint('TOPLEFT', 16, -16)
 	title:SetText('leafLFG')
@@ -211,4 +213,6 @@ addon:SetScript('OnEvent', function()
 			cb:SetChecked(false)
 		end
 	end
+
+	frame:SetScript("OnShow", nil)
 end)
