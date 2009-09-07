@@ -1,0 +1,15 @@
+## Interface: 30100
+
+## Title: |cffff8800leaf|rLFG
+## Notes: A simple addon helps you join LFG Channel easily
+## Author: yleaf
+## X-Email: yaroot@gmail.com
+## Version: 1.4
+## OptionalDeps: tekDebug
+## SavedVariablesPerCharacter: leafLFGDB
+
+libs\LibStub.lua
+libs\CallbackHandler-1.0.lua
+libs\LibDataBroker-1.1.lua
+
+leafLFG.lua
