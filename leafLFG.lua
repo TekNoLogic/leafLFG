@@ -32,7 +32,6 @@ local obj = LibStub('LibDataBroker-1.1'):NewDataObject('leafLFG', {
 	label = L["LFG"],
 	text = '...',
 })
-addon.dataobj = obj
 
 function addon:GetGroupStatus()
 	local raidnum = GetRealNumRaidMembers()
