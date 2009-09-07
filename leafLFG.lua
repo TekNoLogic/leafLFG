@@ -1,14 +1,12 @@
 local locale = GetLocale()
 local L = setmetatable(locale == 'zhCN' and {
 	['LFG-Channel enabled by leafLFG'] = '组队频道由leafLFG自动启用',
-	['When join automatically?'] = '何时自动加入',
 	['LFG Comment:'] = '注释:',
 	['Solo'] = '未组队',
 	['Party'] = '小队',
 	['Raid'] = '团队',
 } or locale == 'zhTW' and {
 	['LFG-Channel enabled by leafLFG'] = '組隊頻道由leafLFG自動啟用',
-	['When join automatically?'] = '何時自動加入',
 	['LFG Comment:'] = '注釋:',
 	['Solo'] = '未組隊',
 	['Party'] = '小隊',
@@ -16,15 +14,10 @@ local L = setmetatable(locale == 'zhCN' and {
 } or {}, {__index=function(t,i) return i end})
 
 
-local addon = CreateFrame('Frame', 'leafLFG', UIParent)
-local playerDisable = ''
-local debugf, debug
+local playerDisable, config = ''
 local debugf = tekDebug and tekDebug:GetFrame('leafLFG')
-if debugf then
-	debug = function(...) debugf:AddMessage(strjoin(', ', tostringall(...))) end
-else
-	debug = function() end
-end
+local debug = debugf and function(...) debugf:AddMessage(strjoin(', ', tostringall(...))) end or function() end
+
 
 local open_eye = 'Interface\\AddOns\\leafLFG\\icon.tga'
 local closed_eye = 'Interface\\AddOns\\leafLFG\\icon2.tga'
@@ -35,7 +28,8 @@ local obj = LibStub('LibDataBroker-1.1'):NewDataObject('leafLFG', {
 	text = '...',
 })
 
-function addon:GetGroupStatus()
+
+local function GetGroupStatus()
 	local raidnum = GetRealNumRaidMembers()
 	local partynum = GetRealNumPartyMembers()
 	if raidnum > 0 then
@@ -47,17 +41,25 @@ function addon:GetGroupStatus()
 	end
 end
 
-function addon:GetLFGStatus()
+
+local function GetLFGStatus()
  	local _, _, _, _, _, _, _, _, _, _, lfg, lfm = GetLookingForGroup()
 	return lfg or lfm, lfg, lfm
 end
 
-function addon:Join()
-	local typ, can = addon:GetGroupStatus()
+
+local function Leave()
+	ClearLookingForGroup()
+	ClearLookingForMore()
+end
+
+
+local function Join()
+	local typ, can = GetGroupStatus()
 	debug('join GroupStatus', typ, can)
 	if not can then return end
 
-	addon:Leave()
+	Leave()
 	if typ == 'Solo' then
 		SetLookingForGroup(3,5,1)
 	else
@@ -66,89 +68,107 @@ function addon:Join()
 	debug'Joined'
 end
 
-function addon:Leave()
-	ClearLookingForGroup()
-	ClearLookingForMore()
+
+local f = CreateFrame("frame")
+f:SetScript("OnEvent", function(self, event, ...) if self[event] then return self[event](self, event, ...) end end)
+f:RegisterEvent("ADDON_LOADED")
+
+
+function f:ADDON_LOADED(event, addon)
+	if addon:lower() ~= "leaflfg" then return end
+
+	leafLFGDB = setmetatable(leafLFGDB or {}, {__index = {comment = L['LFG-Channel enabled by leafLFG'], Solo = true}})
+
+	self:UnregisterEvent("ADDON_LOADED")
+	self.ADDON_LOADED = nil
+
+	if IsLoggedIn() then self:PLAYER_LOGIN() else self:RegisterEvent("PLAYER_LOGIN") end
 end
 
-function addon:OnEvent(event)
-	debug('\n\n\nOnEvent', event)
-	local looking = addon:GetLFGStatus()
+
+function f:PLAYER_LOGIN()
+	self:RegisterEvent('CHAT_MSG_CHANNEL_NOTICE')
+	self:RegisterEvent('PARTY_MEMBERS_CHANGED')
+	self:RegisterEvent('RAID_ROSTER_UPDATE')
+	self:RegisterEvent('ZONE_CHANGED_NEW_AREA')
+	self:RegisterEvent('LFG_UPDATE')
+
+	local leader, tank, healer, damage = GetLFGRoles()
+	if not (leader or tank or healer or damage) then SetLFGRoles(false, false, false, true) end
+	f:CHAT_MSG_CHANNEL_NOTICE(event)
+	SetLFGComment(leafLFGDB.comment)
+
+	self:UnregisterEvent("PLAYER_LOGIN")
+	self.PLAYER_LOGIN = nil
+end)
+
+
+function f:LFG_UPDATE(event)
+	local looking = GetLFGStatus()
 	obj.text = looking and L['|cff00ff00On|r'] or L['|cffff0000Off|r']
 	obj.icon = looking and open_eye or closed_eye
-	if event == 'LFG_UPDATE' then return end
-	local typ, can = addon:GetGroupStatus()
+end
+
+
+function f:CHAT_MSG_CHANNEL_NOTICE()
+	self:LFG_UPDATE()
+
+	local typ, can = GetGroupStatus()
 	debug('GroupStatus', typ, can)
 
 	if playerDisable == typ then return end
 	playerDisable = ''
 
-	local status, lfg, lfm = addon:GetLFGStatus()
+	local status, lfg, lfm = GetLFGStatus()
 	debug('LFGStatus', status, lfg, lfm)
 
 	if (not status) and leafLFGDB[typ] and can then
 		debug'Auto join!'
-		addon:Join()
+		Join()
 	end
 end
+f.PARTY_MEMBERS_CHANGED = f.CHAT_MSG_CHANNEL_NOTICE
+f.RAID_ROSTER_UPDATE = f.CHAT_MSG_CHANNEL_NOTICE
+f.ZONE_CHANGED_NEW_AREA = f.CHAT_MSG_CHANNEL_NOTICE
 
-local frame = CreateFrame('Frame', nil, InterfaceOptionsFramePanelContainer)
-frame:Hide()
-frame.name = 'leafLFG'
-InterfaceOptions_AddCategory(frame)
 
 function obj.OnClick(self, button)
 	if IsModifiedClick() then
-		if addon:GetLFGStatus() then
-			playerDisable = addon:GetGroupStatus()
-			addon:Leave()
+		if GetLFGStatus() then
+			playerDisable = GetGroupStatus()
+			Leave()
 		else
 			playerDisable = ''
-			addon:Join()
+			Join()
 		end
 	else
-		InterfaceOptionsFrame_OpenToCategory(frame)
+		InterfaceOptionsFrame_OpenToCategory(config)
 	end
 end
 
-addon:RegisterEvent'VARIABLES_LOADED'
-addon:SetScript('OnEvent', function()
-	debug'OnLoad'
 
-	local leader, tank, healer, damage = GetLFGRoles()
-	if not (leader or tank or healer or damage) then
-		SetLFGRoles(false, false, false, true)
-	end
+config = CreateFrame('Frame', nil, InterfaceOptionsFramePanelContainer)
+config:Hide()
+config.name = 'leafLFG'
+InterfaceOptions_AddCategory(config)
 
-	leafLFGDB = setmetatable(leafLFGDB or {}, {__index = {comment = L['LFG-Channel enabled by leafLFG'], Solo = true}})
-
-	addon:OnEvent()
-	addon:SetScript('OnEvent', addon.OnEvent)
-	addon:RegisterEvent'CHAT_MSG_CHANNEL_NOTICE'
-	addon:RegisterEvent'PARTY_MEMBERS_CHANGED'
-	addon:RegisterEvent'RAID_ROSTER_UPDATE'
-	addon:RegisterEvent'ZONE_CHANGED_NEW_AREA'
-	addon:RegisterEvent'LFG_UPDATE'
-	SetLFGComment(leafLFGDB.comment)
-end)
-
-frame:SetScript("OnShow", function()
-	local title = frame:CreateFontString(nil, 'ARTWORK', 'GameFontNormalLarge')
+config:SetScript("OnShow", function()
+	local title = config:CreateFontString(nil, 'ARTWORK', 'GameFontNormalLarge')
 	title:SetPoint('TOPLEFT', 16, -16)
 	title:SetText('leafLFG')
 
-	local about = frame:CreateFontString(nil, 'ARTWORK', 'GameFontHighlightSmall')
+	local about = config:CreateFontString(nil, 'ARTWORK', 'GameFontHighlightSmall')
 	about:SetPoint('TOPLEFT', title, 'BOTTOMLEFT', 0, -8)
-	about:SetPoint('RIGHT', frame, -32, 0)
+	about:SetPoint('RIGHT', config, -32, 0)
 	about:SetHeight(32)
 	about:SetJustifyH('LEFT')
 	about:SetJustifyV('TOP')
-	about:SetText(GetAddOnMetadata(frame.name, "Notes"))
+	about:SetText(GetAddOnMetadata(config.name, "Notes"))
 
 	local last
 	local checkboxes = {}
 	for dummy, typ in pairs{'Solo', 'Party', 'Raid'} do
-		local check = CreateFrame('CheckButton', nil, frame, 'OptionsCheckButtonTemplate')
+		local check = CreateFrame('CheckButton', nil, config, 'OptionsCheckButtonTemplate')
 		check:SetPoint('TOPLEFT', last or about, 'BOTTOMLEFT', last and 0 or -2, last and 0 or -8)
 		check.tooltipText = L["Automatically join the LFG system when "..(typ == "Solo" and "" or L["in "])..L[typ:lower()]]
 
@@ -162,19 +182,19 @@ frame:SetScript("OnShow", function()
 
 		check:SetScript('OnClick', function(self)
 
-			local joined = addon:GetLFGStatus()
-			local status = addon:GetGroupStatus()
+			local joined = GetLFGStatus()
+			local status = GetGroupStatus()
 			if self:GetChecked() then
 				leafLFGDB[self.typ] = true
 				if (status == self.typ) and (not joined) then
 					playerDisable = ''
-					addon:Join()
+					Join()
 				end
 			else
 				leafLFGDB[self.typ] = nil
 				if (status == self.typ) and joined then
 					playerDisable = ''
-					addon:Leave()
+					Leave()
 				end
 			end
 		end)
@@ -183,12 +203,12 @@ frame:SetScript("OnShow", function()
 		checkboxes[typ] = check
 	end
 
-	local commentinputabout = frame:CreateFontString(nil, 'ARTWORK', 'GameFontNormalSmall')
+	local commentinputabout = config:CreateFontString(nil, 'ARTWORK', 'GameFontNormalSmall')
 	commentinputabout:SetPoint('TOP', last, 'BOTTOM', 0, -8)
 	commentinputabout:SetPoint('LEFT', 16, 0)
 	commentinputabout:SetText(L['LFG Comment:'])
 
-	local commentinput = CreateFrame('EditBox', nil, frame, 'InputBoxTemplate')
+	local commentinput = CreateFrame('EditBox', nil, config, 'InputBoxTemplate')
 	commentinput:SetHeight(25)
 	commentinput:SetWidth(300)
 	commentinput:SetAutoFocus(false)
@@ -201,7 +221,7 @@ frame:SetScript("OnShow", function()
 		SetLFGComment(leafLFGDB.comment)
 	end)
 
-	frame.default = function()
+	config.default = function()
 		for i in pairs(leafLFGDB) do leafLFGDB[i] = nil end
 		for typ,cb in pairs(checkboxes) do cb:SetChecked(leafLFGDB[typ]) end
 		commentinput:ClearFocus()
@@ -209,5 +229,5 @@ frame:SetScript("OnShow", function()
 		SetLFGComment(leafLFGDB.comment)
 	end
 
-	frame:SetScript("OnShow", nil)
+	config:SetScript("OnShow", nil)
 end)
