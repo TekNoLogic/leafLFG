@@ -217,5 +217,5 @@ addon:SetScript('OnEvent', function()
 		for dummy, cb in pairs(addon.checkboxes) do
 			cb:SetChecked(false)
 		end
-	end)
+	end
 end)
