@@ -95,7 +95,6 @@ end
 local frame = CreateFrame('Frame', nil, InterfaceOptionsFramePanelContainer)
 frame:Hide()
 frame.name = 'leafLFG'
-addon.option = frame
 InterfaceOptions_AddCategory(frame)
 
 function obj.OnClick(self, button)
