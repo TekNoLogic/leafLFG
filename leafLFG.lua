@@ -29,7 +29,8 @@ end
 local obj = LibStub('LibDataBroker-1.1'):NewDataObject('leafLFG', {
 	type = 'data source',
 	icon = 'Interface\\Icons\\spell_shadow_curseofmannoroth',
-	text = L['LFG: ...'],
+	label = L["LFG"],
+	text = '...',
 })
 addon.dataobj = obj
 
@@ -52,9 +53,9 @@ end
 
 function addon:UpdateBrokerText()
 	if addon:GetLFGStatus() then
-		obj.text = L['LFG: |cff00ff00On|r']
+		obj.text = L['|cff00ff00On|r']
 	else
-		obj.text = L['LFG: |cffff0000Off|r']
+		obj.text = L['|cffff0000Off|r']
 	end
 end
 
