@@ -6,7 +6,6 @@ local L = setmetatable(locale == 'zhCN' and {
 	['solo'] = '未组队',
 	['party'] = '小队',
 	['raid'] = '团队',
-	['default'] = '默认',
 } or locale == 'zhTW' and {
 	['LFG-Channel enabled by leafLFG'] = '組隊頻道由leafLFG自動啟用',
 	['When join automatically?'] = '何時自動加入',
@@ -14,7 +13,6 @@ local L = setmetatable(locale == 'zhCN' and {
 	['solo'] = '未組隊',
 	['party'] = '小隊',
 	['raid'] = '團隊',
-	['default'] = '默認',
 } or {}, {__index=function(t,i) return i end})
 
 
@@ -215,10 +213,7 @@ addon:SetScript('OnEvent', function()
 		self:SetText(leafLFGDB.comment)
 	end)
 
-	local default = CreateFrame('Button', nil, frame, 'OptionsButtonTemplate')
-	default:SetText(L['default'])
-	default:SetPoint('BOTTOMLEFT', frame, 10, 20)
-	default:SetScript('OnClick', function()
+	frame.default = function()
 		leafLFGDB = {}
 		leafLFGDB.comment = default_comment
 		commentinput:ClearFocus()
