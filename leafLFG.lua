@@ -99,7 +99,7 @@ addon.option = frame
 InterfaceOptions_AddCategory(frame)
 
 function obj.OnClick(self, button)
-	if button == 'LeftButton' then
+	if IsModifiedClick() then
 		if addon:GetLFGStatus() then
 			playerDisable = addon:GetGroupStatus()
 			addon:Leave()
